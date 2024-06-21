@@ -28,17 +28,53 @@ public class AnimalsRepository : IAnimalsRepository
  
 		return res is not null;
 	}
-    
-    public async Task<AnimalDTO> GetAnimal(int id)
+
+	public async Task<bool> DoesOwnerExist(int id)
+	{
+		var query = "SELECT 1 FROM Owner WHERE ID = @ID";
+
+		await using SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Default"));
+		await using SqlCommand command = new SqlCommand();
+
+		command.Connection = connection;
+		command.CommandText = query;
+		command.Parameters.AddWithValue("@ID", id);
+
+		await connection.OpenAsync();
+
+		var res = await command.ExecuteScalarAsync();
+
+		return res is not null;
+	}
+
+	public async Task<bool> DoesProcedureExist(int id)
+	{
+		var query = "SELECT 1 FROM [Procedure] WHERE ID = @ID";
+
+		await using SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Default"));
+		await using SqlCommand command = new SqlCommand();
+
+		command.Connection = connection;
+		command.CommandText = query;
+		command.Parameters.AddWithValue("@ID", id);
+
+		await connection.OpenAsync();
+
+		var res = await command.ExecuteScalarAsync();
+
+		return res is not null;
+	}
+
+	public async Task<AnimalDTO> GetAnimal(int id)
     {
 	    var query = @"SELECT 
 							Animal.ID AS AnimalID,
 							Animal.Name AS AnimalName,
 							AdmissionDate,
-							AnimalClass,
+							Animal_Class.Name as AnimalClass,
 							Owner.ID as OwnerID,
 							FirstName,
-							LastName,
+							LastName
 						FROM Animal
 						JOIN Owner ON Owner.ID = Animal.OwnerID
 						JOIN Animal_Class ON Animal_Class.ID = Animal.AnimalClassID
@@ -71,6 +107,7 @@ public class AnimalsRepository : IAnimalsRepository
 		    {
 			    Id = reader.GetInt32(animalIdOrdinal),
 			    Name = reader.GetString(animalNameOrdinal),
+			    AnimalClass = reader.GetString(animalclassOrdinal),
 			    AdmissionDate = reader.GetDateTime(admissionDateOrdinal),
 			    Owner = new OwnerDto()
 			    {
@@ -85,4 +122,9 @@ public class AnimalsRepository : IAnimalsRepository
         
         return animalDto;
     }
+
+	public Task AddNewAnimalWithProcedures(NewAnimalWithProcedures newAnimalWithProcedures)
+	{
+		throw new NotImplementedException();
+	}
 }
